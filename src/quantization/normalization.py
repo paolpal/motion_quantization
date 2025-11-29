@@ -1,20 +1,16 @@
+from typing import Optional
 import numpy as np
 from utils.plot import plot_skeleton
 from utils.constants import KEYPOINT_INDEX
 
-def normalize_pose(keypoints):
+def normalize_pose(keypoints: np.ndarray) -> np.ndarray:
     """
     Normalizza i keypoints rispetto al corpo (centro e scala).
-    keypoints: lista di [x, y] per ogni punto
-    Returns: keypoints normalizzati come array flat
+    keypoints : np.ndarray
+        Shape (num_keypoints, 2)
+    Returns: keypoints normalizzati come np.ndarray flattenato
     """
-    if keypoints is None:
-        return None
-    
-    kp = np.array(keypoints)
-    
-    if kp.size == 0:
-        return None
+    kp = keypoints    
     
     center = kp.mean(axis=0)
     
@@ -23,14 +19,13 @@ def normalize_pose(keypoints):
     scale = distances.mean()
     
     if scale < 1e-6:
-        return None
-    
-    # Normalizza
-    normalized = (kp - center) / scale
+        normalized= kp - center
+    else:
+        normalized = (kp - center) / scale
 
-    return normalized.flatten()
+    return normalized
 
-def filter_torso(keypoints, remove_head=True):
+def filter_torso(keypoints: np.ndarray, remove_head=True) -> np.ndarray:
     """
     Filtra i keypoints per mantenere solo torso e braccia, rimuovendo gambe e opzionalmente la testa.
     Mantiene: spalle, gomiti, polsi, anche (e opzionalmente testa)
@@ -41,9 +36,10 @@ def filter_torso(keypoints, remove_head=True):
     remove_head: se True rimuove naso, occhi e orecchie (default: True)
     Returns: keypoints filtrati come lista (stessa lunghezza, punti rimossi = [0, 0])
     """
+    
     # Indici dei keypoints da mantenere (YOLO Pose)
     # Spalle (5,6), gomiti (7,8), polsi (9,10), anche (11,12)
-    keep_indices = [
+    keep_indices = np.array([
         KEYPOINT_INDEX['left_shoulder'],
         KEYPOINT_INDEX['right_shoulder'],
         KEYPOINT_INDEX['left_elbow'],
@@ -52,19 +48,17 @@ def filter_torso(keypoints, remove_head=True):
         KEYPOINT_INDEX['right_wrist'],
         KEYPOINT_INDEX['left_hip'],
         KEYPOINT_INDEX['right_hip']
-    ]
+    ])
     
     # Se non si rimuove la testa, aggiungere i punti della testa
     if not remove_head:
-        keep_indices.extend([
+        head_indices = np.array([
             KEYPOINT_INDEX['nose'],
             KEYPOINT_INDEX['left_eye'],
             KEYPOINT_INDEX['right_eye'],
             KEYPOINT_INDEX['left_ear'],
             KEYPOINT_INDEX['right_ear']
         ])
+        keep_indices = np.concatenate([keep_indices, head_indices])
 
-    if keypoints is None or len(keypoints) == 0:
-        return keypoints
-    filtered_keypoints = [keypoints[i] for i in keep_indices]
-    return filtered_keypoints
+    return keypoints[keep_indices]

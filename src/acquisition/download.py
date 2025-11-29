@@ -2,11 +2,12 @@ import os
 import sys
 import yt_dlp
 import logging
+from pathlib import Path
 from contextlib import redirect_stdout, redirect_stderr
 
 logger = logging.getLogger(__name__)
 
-def download(link:str, output_dir:str, file_name:str) -> None:
+def download(link:str, output_dir:Path, file_name:str) -> None:
     """Download a video from a given link using yt-dlp.
 
     Args:
@@ -15,7 +16,7 @@ def download(link:str, output_dir:str, file_name:str) -> None:
     """
     os.makedirs(output_dir, exist_ok=True)
     ydl_opts = {
-        'outtmpl': f'{output_dir}/{file_name}.%(ext)s',
+        'outtmpl': f'{output_dir/file_name}.%(ext)s',
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best',  # Download best quality video and audio
         'quiet': True,  # Suppress verbose output
     }

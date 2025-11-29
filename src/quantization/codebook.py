@@ -21,9 +21,9 @@ class PoseCodebook:
         If None, tokens = range(n_clusters).
     """
 
-    def __init__(self, clusterer: HDBSCAN, centroids, scaler, poses, tokens=None):
-        self.clusterer: HDBSCAN = clusterer
-        self.scaler : StandardScaler = scaler
+    def __init__(self, clusterer, centroids, transformer, poses, tokens=None):
+        self.clusterer = clusterer
+        self.transformer = transformer
         self.poses = poses
 
         assert len(poses) == len(centroids), "Number of poses must match number of centroids"
@@ -91,7 +91,7 @@ class PoseCodebook:
         
         print(f"About to scale: {norm_pose.shape}")
         # Scala i valori normalizzati
-        scaled_pose = self.scaler.transform(norm_pose)
+        scaled_pose = self.transformer.transform(norm_pose)
         print(f"Scaled pose shape: {scaled_pose.shape}")
         
         # Predici il cluster usando nearest centroid (più robusto di approximate_predict)

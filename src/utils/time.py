@@ -1,4 +1,7 @@
-def parse_time(time_str: str) -> float:
+from typing import Optional
+
+
+def parse_time(time_str: str) -> Optional[float]:
     """Parse a time string and return seconds as a float for moviepy.
 
     Args:
@@ -31,7 +34,7 @@ def parse_time(time_str: str) -> float:
     elif len(parts) == 1:  # SS.mmm or SS
         return float(parts[0])
     else:
-        raise ValueError(f"Invalid time format: {time_str}")
+        return None
 
 def strip_date(timestamp: str) -> str:
     """Remove the date part from a timestamp string, keeping only the time.

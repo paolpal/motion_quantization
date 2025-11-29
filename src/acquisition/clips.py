@@ -1,19 +1,21 @@
 import os
 from pathlib import Path
+from datetime import time
+from typing import Optional
 from moviepy import VideoFileClip
 from utils.time import parse_time
 
-def cut_clip(input_video_path:str, start_time, end_time, output_video_path):
+def cut_clip(input_video_path:Path, start_time:Optional[float], end_time:Optional[float], output_video_path:Path):
     os.makedirs(os.path.dirname(output_video_path), exist_ok=True)
 
     clip = VideoFileClip(input_video_path)
 
     if start_time is None:
-        start_time = 0
+        start_time = 0.0
     if end_time is None:
         end_time = clip.duration
 
-    if start_time == 0 and end_time == clip.duration:
+    if start_time == 0.0 and end_time == clip.duration:
         new_clip = clip
     else:
         new_clip = clip.subclipped(start_time, end_time)

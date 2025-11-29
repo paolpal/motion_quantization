@@ -27,6 +27,7 @@ dependencies = [
     "faster-whisper>=1.2.1",
     "ultralytics>=8.3.232",
     "hdbscan>=0.8.40",
+    "pats",
 ]
 
 [project.optional-dependencies]
@@ -43,3 +44,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.uv.sources]
+pats = { path = "../pats" }

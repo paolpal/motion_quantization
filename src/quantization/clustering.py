@@ -4,8 +4,10 @@ import numpy as np
 from quantization.codebook import PoseCodebook
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.decomposition import PCA
+from utils.cluster_plot import cluster_plot
+from sklearn.cluster import DBSCAN
 
-def cluster_poses(poses, min_cluster_size=10) -> Optional[PoseCodebook]:
+def cluster_poses(poses: np.ndarray, min_cluster_size=10, min_samples=5) -> Optional[PoseCodebook]:
     """
     poses: list of np.array, each of shape (num_keypoints, 2)
     min_cluster_size: minimum size of clusters for HDBSCAN
@@ -17,10 +19,13 @@ def cluster_poses(poses, min_cluster_size=10) -> Optional[PoseCodebook]:
 
     data = np.array(poses)
 
-    scaler = StandardScaler()
-    scaled = scaler.fit_transform(data)
+    transformer = PCA(n_components=2)
+    print(f"Fitting transformer on data of shape {data.shape}")
+    scaled = transformer.fit_transform(data.reshape(len(data), -1))
+    print(f"Transformed data shape: {scaled.shape}")
 
-    clusterer = HDBSCAN(min_cluster_size=min_cluster_size, prediction_data=True)
+    clusterer = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples, prediction_data=True)
+    #clusterer = DBSCAN(eps=0.1, min_samples=min_cluster_size)
     labels = clusterer.fit_predict(scaled)
 
     n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
@@ -33,11 +38,15 @@ def cluster_poses(poses, min_cluster_size=10) -> Optional[PoseCodebook]:
         mask = labels == cluster_id
         cluster_points = scaled[mask]
         if len(cluster_points) > 0:
-            center = clusterer.weighted_cluster_medoid(cluster_id)
-            pose = scaler.inverse_transform(center.reshape(1, -1))
+            #center = clusterer.weighted_cluster_medoid(cluster_id)
+            center = cluster_points.mean(axis=0)
+            print(f"Cluster {cluster_id}: size={len(cluster_points)}, center shape={center.shape}, center={center}")
+            pose = transformer.inverse_transform(center.reshape(1, -1))
             pose = pose.reshape(-1, 2)
             posemids.append(pose)
             centers.append(center)
             sizes.append(len(cluster_points))
 
-    return PoseCodebook(clusterer=clusterer, centroids=np.array(centers), scaler=scaler, poses=posemids)
+    cluster_plot(scaled, labels, centroids=np.array(centers))
+
+    return PoseCodebook(clusterer=clusterer, centroids=np.array(centers), transformer=transformer, poses=posemids)

@@ -13,6 +13,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_path', required=True, help='Path to the data folder')
     parser.add_argument('--speaker', required=False, help='Speaker name')
     parser.add_argument('--min_cluster_size', type=int, default=20, help='Minimum cluster size for HDBSCAN')
+    parser.add_argument('--min_samples', type=int, default=5, help='Minimum samples for HDBSCAN')
     
     split = parser.add_mutually_exclusive_group(required=True)
     split.add_argument('--train', action='store_true', help='Process train dataset')
@@ -34,24 +35,23 @@ if __name__ == "__main__":
     for keypoint_file in keypoint_files:
         with open(keypoint_file, 'r') as f:
             poses = json.load(f)
-        for frame in tqdm(poses["keypoints_data"], desc=f"Processing {keypoint_file.name}"):
-            if 'keypoints' in frame and frame['keypoints']:
-                kp = frame['keypoints'][0] if isinstance(frame['keypoints'], list) else frame['keypoints']
-                # Handle nested structure: keypoints might be [[[x,y], ...]] instead of [[x,y], ...]
-                if isinstance(kp, list) and len(kp) > 0 and isinstance(kp[0], list) and len(kp[0]) > 0 and isinstance(kp[0][0], list):
-                    kp = kp[0]  # Extract the actual keypoints from the extra nesting
-                kp = filter_torso(kp, remove_head=True)
-                normalized = normalize_pose(kp)
-                if normalized is not None:
-                    all_poses.append(normalized)
+        for kp in tqdm(poses["keypoints"], desc=f"Processing {keypoint_file.name}"):
+            kp:np.ndarray = np.array(kp)
+            if kp is None or kp.size == 0:
+                continue
+            kp = filter_torso(kp, remove_head=True)
+            
+            normalized = normalize_pose(kp)
 
-    # Forse posso proiettare in uno spazio più basso prima di clusterizzare
-    # tipo spazio latente con PCA o VQ-VAE
+            if normalized is not None:
+                all_poses.append(normalized)
+
+    all_poses = np.array(all_poses)
 
     print(f"Total normalized poses collected: {len(all_poses)}")
     print(f"{type(all_poses[0])} with shape {all_poses[0].shape}")
 
-    codebook = cluster_poses(all_poses, min_cluster_size=args.min_cluster_size)
+    codebook = cluster_poses(all_poses, min_cluster_size=args.min_cluster_size, min_samples=args.min_samples)
 
     if codebook is not None:
         print(f"Clustering completed. Found {len(codebook.centroids)} centroids.")
