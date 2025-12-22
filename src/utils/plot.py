@@ -131,7 +131,7 @@ def plot_skeleton(pose, title="Skeleton", show=True, skeleton_type=None):
     else:
         return fig, ax
 
-def plot_codebook(codebook, title="Pose Codebook", show=True, skeleton_type=None):
+def plot_codebook(codebook, title="Pose Codebook", show=True, skeleton_type=None, polar=False):
     """
     Plotta tutti i centroidi del codebook in una griglia.
     
