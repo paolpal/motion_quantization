@@ -9,7 +9,7 @@ from umap import UMAP
 from utils.cluster_plot import cluster_plot
 from sklearn.cluster import DBSCAN
 
-def cluster_poses(poses: np.ndarray, min_cluster_size=10, min_samples=5) -> Optional[PoseCodebook]:
+def cluster_poses(poses: np.ndarray, min_cluster_size=10, min_samples=5, n_components=2) -> Optional[PoseCodebook]:
     """
     poses: list of np.array, each of shape (num_keypoints, 2)
     min_cluster_size: minimum size of clusters for HDBSCAN
@@ -20,7 +20,7 @@ def cluster_poses(poses: np.ndarray, min_cluster_size=10, min_samples=5) -> Opti
         return None
 
     data = np.array(poses)
-    transformer = UMAP(n_components=2)
+    transformer = UMAP(n_components=n_components)
     print(f"Poses shape{data.shape}")
     scaled : np.ndarray = transformer.fit_transform(data.reshape(len(data), -1)) # type: ignore
     print(f"Transformed poses shape: {scaled.shape} {type(scaled)}")
@@ -53,7 +53,8 @@ def cluster_poses(poses: np.ndarray, min_cluster_size=10, min_samples=5) -> Opti
             sizes.append(len(cluster_points))
 
     # cluster_plot(scaled, labels, centroids=np.array(centers))
-    cluster_plot(scaled, labels)
+    if n_components == 2:   
+        cluster_plot(scaled, labels)
 
     if len(centers) == 0:
         return None
