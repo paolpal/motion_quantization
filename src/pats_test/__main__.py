@@ -8,12 +8,12 @@ from utils.skeletonPATS import SkeletonPATS
 
 if __name__ == "__main__":
     # Esempio di caricamento di più campioni dal dataset PATS
-    speaker = "fallon"
+    speaker = "seth"
     split = "dev"
     data_path = Path(__file__).resolve().parents[2]/"data"
 
     intervals = get_speaker_intervals(speaker, split=split)
-    clips = load_multiple_samples(speaker=speaker, interval_ids=intervals[:1])
+    clips = load_multiple_samples(speaker=speaker, interval_ids=intervals)
 
     skeleton_poses = []
     for clip in clips:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     polar_poses = SkeletonPATS.encode_as_polar(skeleton_poses)
 
-    codebook = cluster_poses(polar_poses, min_cluster_size=min_cluster_size, min_samples=min_cluster_size)
+    codebook = cluster_poses(polar_poses, min_cluster_size=min_cluster_size, min_samples=min_cluster_size, n_components=16)
     #codebook = cluster_poses(skeleton_poses, min_cluster_size=min_cluster_size, min_samples=min_cluster_size)
 
     if codebook is not None:
