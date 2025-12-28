@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Optional
 
 class SkeletonPATS:
     def __init__(self):
@@ -85,181 +86,6 @@ class SkeletonPATS:
         return np.take(pose, keep_idx, axis=-2)
 
     @staticmethod
-    def compute_bone_lengths(pose: np.ndarray) -> np.ndarray:
-        """
-        Calcola le lunghezze delle ossa (distanze tra joint connessi).
-        
-        Args:
-            pose: Array di shape (J, 2), (T, J, 2), o (B, T, J, 2)
-                  dove J è il numero di joint
-        
-        Returns:
-            Array di shape (..., J) con le distanze dal parent per ogni joint.
-            Il primo joint (root) avrà distanza 0.
-        """
-        parents = np.array(SkeletonPATS.parents())
-        
-        # Gestisce diverse dimensioni
-        original_shape = pose.shape
-        if pose.ndim == 2:
-            pose = pose[None, None, :, :]  # (1, 1, J, 2)
-        elif pose.ndim == 3:
-            pose = pose[None, :, :, :]  # (1, T, J, 2)
-        
-        B, T, J, D = pose.shape
-        
-        # Calcola le distanze
-        distances = np.zeros((B, T, J))
-        
-        for j in range(J):
-            parent_idx = parents[j]
-            if parent_idx >= 0:
-                # Distanza euclidea tra joint e parent
-                diff = pose[:, :, j, :] - pose[:, :, parent_idx, :]
-                distances[:, :, j] = np.linalg.norm(diff, axis=-1)
-        
-        # Ripristina la shape originale
-        if len(original_shape) == 2:
-            distances = distances[0, 0, :]
-        elif len(original_shape) == 3:
-            distances = distances[0, :, :]
-        
-        return distances
-
-    @staticmethod
-    def compute_bone_angles(pose: np.ndarray) -> np.ndarray:
-        """
-        Calcola gli angoli delle ossa rispetto al parent.
-        Per ogni joint, calcola l'angolo del vettore (parent -> joint) 
-        rispetto all'asse x.
-        
-        Args:
-            pose: Array di shape (J, 2), (T, J, 2), o (B, T, J, 2)
-                  dove J è il numero di joint
-        
-        Returns:
-            Array di shape (..., J) con gli angoli in radianti.
-        """
-        parents = np.array(SkeletonPATS.parents())
-        
-        # Gestisce diverse dimensioni
-        original_shape = pose.shape
-        if pose.ndim == 2:
-            pose = pose[None, None, :, :]  # (1, 1, J, 2)
-        elif pose.ndim == 3:
-            pose = pose[None, :, :, :]  # (1, T, J, 2)
-        
-        B, T, J, D = pose.shape
-        
-        # Angoli 2D
-        angles = np.zeros((B, T, J))
-        
-        for j in range(J):
-            parent_idx = parents[j]
-            if parent_idx >= 0:
-                # Vettore dal parent al joint
-                diff = pose[:, :, j, :] - pose[:, :, parent_idx, :]
-                # Angolo rispetto all'asse x
-                angles[:, :, j] = np.arctan2(diff[:, :, 1], diff[:, :, 0])
-        
-        # Ripristina la shape originale
-        if len(original_shape) == 2:
-            angles = angles[0, 0, :]
-        elif len(original_shape) == 3:
-            angles = angles[0, :, :]
-        
-        return angles
-
-    @staticmethod
-    def encode_as_polar(pose: np.ndarray) -> np.ndarray:
-        """
-        Encodifica lo scheletro come angoli e distanze (coordinate polari).
-        Ogni joint viene rappresentato come (distanza, angolo) invece di (x, y).
-        
-        Args:
-            pose: Array di shape (J, 2), (T, J, 2), o (B, T, J, 2)
-        
-        Returns:
-            Array di shape identica all'input dove ogni joint ha formato (r, θ):
-            - r: distanza dal parent
-            - θ: angolo rispetto all'asse x (in radianti)
-        """
-        distances = SkeletonPATS.compute_bone_lengths(pose)  # (..., J)
-        angles = SkeletonPATS.compute_bone_angles(pose)  # (..., J)
-        
-        # Combina in un unico array mantenendo la shape originale
-        # Espandi le dimensioni per lo stack
-        # Funziona per tutte le dimensioni supportate
-        polar = np.stack([distances, angles], axis=-1)
-        return polar
-
-    @staticmethod
-    def decode_from_polar(
-        polar: np.ndarray,
-        root_position: np.ndarray | None = None
-    ) -> np.ndarray:
-        """
-        Decodifica lo scheletro da coordinate polari a posizioni cartesiane.
-        
-        Args:
-            polar: Array di shape (J, 2), (T, J, 2), o (B, T, J, 2)
-                  dove ogni joint ha formato (r, θ)
-            root_position: Posizione del root joint. Se None, usa l'origine.
-                          Shape: (2,), (T, 2), o (B, T, 2)
-        
-        Returns:
-            Array di shape identica all'input con le posizioni (x, y) dei joint
-        """
-        parents = np.array(SkeletonPATS.parents())
-        
-        # Estrai distanze e angoli
-        distances = polar[..., 0]  # (..., J)
-        angles = polar[..., 1]  # (..., J)
-        
-        # Gestisce diverse dimensioni
-        original_shape = polar.shape
-        if polar.ndim == 2:
-            distances = distances[None, None, :]  # (1, 1, J)
-            angles = angles[None, None, :]  # (1, 1, J)
-        elif polar.ndim == 3:
-            distances = distances[None, :, :]  # (1, T, J)
-            angles = angles[None, :, :]  # (1, T, J)
-        
-        B, T, J = distances.shape
-        
-        pose = np.zeros((B, T, J, 2))
-        
-        # Imposta la posizione del root
-        if root_position is not None:
-            if root_position.ndim == 1:
-                root_position = root_position[None, None, :]  # (1, 1, 2)
-            elif root_position.ndim == 2:
-                root_position = root_position[None, :, :]  # (1, T, 2)
-            pose[:, :, 0, :] = root_position
-        
-        # Ricostruisce le posizioni iterando sui joint
-        for j in range(1, J):
-            parent_idx = parents[j]
-            if parent_idx >= 0:
-                parent_pos = pose[:, :, parent_idx, :]
-                dist = distances[:, :, j]
-                angle = angles[:, :, j]
-                
-                # Converti da polare a cartesiano
-                dx = dist * np.cos(angle)
-                dy = dist * np.sin(angle)
-                pose[:, :, j, :] = parent_pos + np.stack([dx, dy], axis=-1)
-        
-        # Ripristina la shape originale
-        if len(original_shape) == 2:
-            pose = pose[0, 0, :, :]
-        elif len(original_shape) == 3:
-            pose = pose[0, :, :, :]
-        
-        return pose 
-    
-
-    @staticmethod
     def normalize_skeleton(pose: np.ndarray, scale: float = 1.0) -> np.ndarray:
         """
         Normalizza lo scheletro centrando e scalando le posizioni dei joint.
@@ -296,3 +122,62 @@ class SkeletonPATS:
         normalized = pose / shoulder_dist * scale
         
         return normalized
+    
+    @staticmethod
+    def encode_kinematics(pose: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        parents = np.array(SkeletonPATS.parents())
+        T, J, _ = pose.shape
+        
+        # Escludiamo il root (indice 0) dai dati polari
+        polar = np.zeros((T, J - 1, 3))
+        root_pos = pose[:, 0, :].copy() 
+
+        for j in range(1, J): # Partiamo da 1
+            p = parents[j]
+            # Calcolo vettori e angoli (stessa logica precedente)
+            vec_j = pose[:, j, :] - pose[:, p, :]
+            dist = np.linalg.norm(vec_j, axis=-1)
+            phi_j = np.arctan2(vec_j[:, 1], vec_j[:, 0])
+
+            gp = parents[p]
+            if gp == -1:
+                theta_local = phi_j
+            else:
+                vec_p = pose[:, p, :] - pose[:, gp, :]
+                phi_p = np.arctan2(vec_p[:, 1], vec_p[:, 0])
+                theta_local = phi_j - phi_p
+
+            # Riempiamo l'indice j-1 perché abbiamo rimosso il root
+            polar[:, j-1, 0] = dist
+            polar[:, j-1, 1] = np.cos(theta_local)
+            polar[:, j-1, 2] = np.sin(theta_local)
+            
+        return polar, root_pos
+
+    @staticmethod
+    def decode_kinematics(polar: np.ndarray, root_pos: Optional[np.ndarray]=None) -> np.ndarray:
+        parents = np.array(SkeletonPATS.parents())
+        T, J_minus_1, _ = polar.shape
+        J = J_minus_1 + 1
+        
+        pose = np.zeros((T, J, 2))
+        if root_pos is not None:
+            pose[:, 0, :] = root_pos
+        global_angles = np.zeros((T, J))
+
+        for j in range(1, J): # Ricostruiamo partendo dal primo figlio del root
+            p = parents[j]
+            
+            # Recuperiamo i dati dall'indice j-1
+            dist = polar[:, j-1, 0]
+            theta_local = np.arctan2(polar[:, j-1, 2], polar[:, j-1, 1])
+            
+            if parents[p] == -1:
+                global_angles[:, j] = theta_local
+            else:
+                global_angles[:, j] = global_angles[:, p] + theta_local
+                
+            pose[:, j, 0] = pose[:, p, 0] + dist * np.cos(global_angles[:, j])
+            pose[:, j, 1] = pose[:, p, 1] + dist * np.sin(global_angles[:, j])
+            
+        return pose
