@@ -33,6 +33,8 @@ dependencies = [
     "torch>=2.9.1",
     "vector-quantize-pytorch>=1.27.15",
     "scipy>=1.15.3",
+    "wandb>=0.23.1",
+    "weave>=0.52.23",
 ]
 
 [project.optional-dependencies]
