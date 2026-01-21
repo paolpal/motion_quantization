@@ -3,7 +3,7 @@ requires = ["setuptools>=65.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "posemi-dataset"
+name = "motion_quantization"
 version = "0.1.0"
 description = "Posemi dataset processing and management"
 readme = "README.md"
@@ -26,15 +26,17 @@ dependencies = [
     "moviepy>=2.2.1",
     "faster-whisper>=1.2.1",
     "ultralytics>=8.3.232",
-    "hdbscan>=0.8.40",
     "pats",
     "seaborn>=0.13.2",
-    "umap-learn>=0.5.9.post2",
     "torch>=2.9.1",
     "vector-quantize-pytorch>=1.27.15",
     "scipy>=1.15.3",
     "wandb>=0.23.1",
     "weave>=0.52.23",
+    "optuna>=4.6.0",
+    "numba>=0.59.0",
+    "llvmlite>=0.42.0",
+    "umap-learn>=0.5.5",
 ]
 
 [project.optional-dependencies]
@@ -54,3 +56,9 @@ where = ["src"]
 
 [tool.uv.sources]
 pats = { path = "../pats", editable = true }
+
+[tool.uv.workspace]
+members = [
+    ".",
+]
+

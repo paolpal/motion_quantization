@@ -1,0 +1,6 @@
+wandb/
+weights/
+videos/
+codebooks/
+cache-dataset/
+*.db
