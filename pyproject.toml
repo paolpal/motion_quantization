@@ -7,7 +7,7 @@ name = "motion_quantization"
 version = "0.1.0"
 description = "Posemi dataset processing and management"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<=3.12"
 license = {text = "MIT"}
 
 authors = [
@@ -19,15 +19,10 @@ dependencies = [
     "pandas>=2.0.0",
     "matplotlib>=3.7.0",
     "scikit-learn>=1.3.0",
-    "yt-dlp>=2025.11.12",
-    "argparse>=1.4.0",
     "joblib>=1.5.2",
     "tqdm>=4.67.1",
-    "moviepy>=2.2.1",
-    "faster-whisper>=1.2.1",
     "ultralytics>=8.3.232",
     "pats",
-    "seaborn>=0.13.2",
     "torch>=2.9.1",
     "vector-quantize-pytorch>=1.27.15",
     "scipy>=1.15.3",
@@ -36,7 +31,6 @@ dependencies = [
     "optuna>=4.6.0",
     "numba>=0.59.0",
     "llvmlite>=0.42.0",
-    "umap-learn>=0.5.5",
 ]
 
 [project.optional-dependencies]
@@ -55,7 +49,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.uv.sources]
-pats = { path = "../pats", editable = true }
+pats = { path = "../pats" }
 
 [tool.uv.workspace]
 members = [
