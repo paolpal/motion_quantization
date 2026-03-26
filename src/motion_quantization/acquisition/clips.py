@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import time
 from typing import Optional
 from moviepy import VideoFileClip
-from utils.time import parse_time
+from ..utils.time import parse_time
 
 def cut_clip(input_video_path:Path, start_time:Optional[float], end_time:Optional[float], output_video_path:Path):
     os.makedirs(os.path.dirname(output_video_path), exist_ok=True)
@@ -20,7 +20,7 @@ def cut_clip(input_video_path:Path, start_time:Optional[float], end_time:Optiona
     else:
         new_clip = clip.subclipped(start_time, end_time)
 
-    new_clip.write_videofile(output_video_path, codec="libx264")
+    new_clip.write_videofile(output_video_path, fps=15, codec="libx264")
     clip.close()
 
 if __name__ == "__main__":

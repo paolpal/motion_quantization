@@ -31,6 +31,8 @@ dependencies = [
     "optuna>=4.6.0",
     "numba>=0.59.0",
     "llvmlite>=0.42.0",
+    "yt-dlp>=2026.3.17",
+    "moviepy>=2.2.1",
 ]
 
 [project.optional-dependencies]

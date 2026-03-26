@@ -22,6 +22,7 @@ def check(url: str) -> bool:
             with redirect_stdout(null_device), redirect_stderr(null_device):
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
                     info = ydl.extract_info(url, download=False)
+                    # print(f"Checked video: {url} - Title: {info.get('title', 'N/A')}")
                     return not info.get('is_live', False)  # Check if the video is live
     except Exception as e:
         # print(f"Error checking video {url}: {e}")
