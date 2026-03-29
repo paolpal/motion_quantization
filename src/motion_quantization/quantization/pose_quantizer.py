@@ -22,6 +22,7 @@ class PoseTokenizer:
         # Shortcut al codebook
         self.codebook = model.vq.codebook
         self.num_embeddings = self.codebook.shape[0]
+        self.embedding_dim = self.codebook.shape[1]
         
         # ----------------
         # TOKEN SPECIALI (In fondo)
@@ -99,6 +100,16 @@ class PoseTokenizer:
         Mappa la posa nello spazio latente continuo (z).
         """
         return self.model.encoder(pose.to(self.device))
+    
+    @torch.no_grad()
+    def nearest_token(self, latent_vec: torch.Tensor) -> int:
+        """
+        Trova il token ID più vicino a un vettore latente continuo.
+        """
+        z_q, codebook_indices, _ = self.model.vq(latent_vec)
+        token_ids = self.codebook_idx_to_token_id(codebook_indices)
+        
+        return token_ids.item()
 
     @torch.no_grad()
     def quantize(self, pose: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
