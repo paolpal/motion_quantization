@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from vector_quantize_pytorch import VectorQuantize
+from typing import Union
 
 
 class SkeletonVQVAE(nn.Module):
@@ -106,7 +107,7 @@ class SkeletonVQVAE(nn.Module):
         print(f"Modello salvato in: {path}")
 
     @staticmethod
-    def load(path: str, device='cpu'):
+    def load(path: str, device: Union[torch.device, str] = ('cpu')):
         """Carica il modello ricostruendo l'architettura dai metadati salvati."""
         checkpoint = torch.load(path, map_location=device)
         
